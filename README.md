@@ -40,4 +40,4 @@ Copy over [examples/flake.nix](examples/flake.nix) to `/etc/nixos` on the Instan
 
 ### 6. SSH in and update as normal
 
-Now you can do a normal rebuild in the `/etc/nixos` directory and everything should work as normal!
+Now you can do a normal rebuild in the `/etc/nixos` directory and everything should work as normal. As per my testing, rebuilds on the default configuration usually take well under a minute!
