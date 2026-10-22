@@ -30,16 +30,34 @@
         oci-base = import ./modules/oci-base.nix;
       };
 
-      # Example configuration: builds a minimal NixOS qcow2 for OCI A1.
-      # Users should fork this repo and replace ./modules/example/configuration.nix
-      # with their own configuration.
-      nixosConfigurations.oracle-nix = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.oracle-nix-image = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         modules = [
           "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
           self.nixosModules.oci-base
-
-          ./modules/example/configuration.nix
+          ./example/configuration.nix
+          # Override the OCIImage derivation to use our configuration instead of oci-config-user.nix
+          (
+            {
+              config,
+              lib,
+              pkgs,
+              ...
+            }:
+            {
+              system.build.OCIImage = lib.mkForce (
+                import "${nixpkgs}/nixos/lib/make-disk-image.nix" {
+                  inherit config lib pkgs;
+                  diskSize = config.virtualisation.diskSize or (8 * 1024);
+                  name = "oci-image";
+                  baseName = config.image.baseName or "nixos-image-oci";
+                  configFile = ./example/configuration.nix;
+                  format = "qcow2";
+                  partitionTableType = if config.oci.efi then "efi" else "legacy";
+                }
+              );
+            }
+          )
         ];
       };
 
@@ -51,7 +69,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          oracle-nix-image = self.nixosConfigurations.oracle-nix.config.system.build.OCIImage;
+          oracle-nix-image = self.nixosConfigurations.oracle-nix-image.config.system.build.OCIImage;
           default = self.packages.${system}.oracle-nix-image;
 
           import-tools = pkgs.python3.withPackages (

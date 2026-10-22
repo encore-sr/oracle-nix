@@ -143,6 +143,11 @@ def main() -> None:
         "--config",
         default=os.environ.get("OCI_CONFIG", str(Path.home() / ".oci/config")),
     )
+    ap.add_argument(
+        "--delete-old",
+        action="store_true",
+        help="Delete any existing images with the same display name before importing",
+    )
     args = ap.parse_args()
 
     if not args.qcow2.is_file():
@@ -161,6 +166,27 @@ def main() -> None:
     compartment = cfg.get("compartment_id") or cfg["tenancy"]
 
     session = make_session()
+
+    # Delete old images with same display name if requested
+    if args.delete_old:
+        compute_client = oci.core.ComputeClient(cfg, signer=signer)
+        images = compute_client.list_images(
+            compartment_id=compartment,
+            display_name=args.image_name,
+            lifecycle_state="AVAILABLE",
+        ).data
+        for img in images:
+            print(f"Deleting old image: {img.display_name} ({img.id})")
+            compute_client.delete_image(img.id)
+            # Wait for deletion
+            while True:
+                try:
+                    compute_client.get_image(img.id)
+                    time.sleep(5)
+                except oci.exceptions.ServiceError as e:
+                    if e.status == 404:
+                        break
+                    raise
 
     ns = session.get(f"{obj}/n", auth=signer, timeout=30).text.strip('"')
     print(f"namespace: {ns}")

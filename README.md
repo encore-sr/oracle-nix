@@ -9,8 +9,7 @@ NixOS module for Oracle Cloud Infrastructure (Ampere A1).
 ```bash
 git clone https://github.com/encore-sr/oracle-nix my-oracle-nix
 cd my-oracle-nix
-cp -r modules/example my-config
-# Edit my-config/configuration.nix with your settings
+# Edit example/configuration.nix with your settings
 ```
 
 ### 2. Build the qcow2 locally
