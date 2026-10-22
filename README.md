@@ -2,6 +2,8 @@
 
 NixOS module for Oracle Cloud Infrastructure (Ampere A1).
 
+![Cover](assets/cover.png)
+
 ## Quick start
 
 ### 1. Create your own repo from the example
